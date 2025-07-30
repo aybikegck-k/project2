@@ -1,4 +1,5 @@
 // src/utils/helpers.js
+//src/utils/: Yardımcı fonksiyonları (helpers.js gibi) içeriyor.
 
 // Rastgele kısa bir kod oluşturan fonksiyon
 function generateShortCode() {
@@ -14,7 +15,7 @@ function generateShortCode() {
 }
 
 // Bir URL'nin geçerli olup olmadığını basitçe kontrol eden fonksiyon
-function urlGecerliMi(string) {
+function isValidUrl(string) { // <<< BURAYI DEĞİŞTİRDİM
     try {
         // 'new URL(string)' ile URL oluşturmaya çalışırız.
         // Eğer geçerli bir URL değilse hata fırlatır.
@@ -29,6 +30,6 @@ function urlGecerliMi(string) {
 // Bu fonksiyonları başka dosyalarda kullanabilmek için dışa aktarıyoruz
 module.exports = {
     generateShortCode, //özetle bu fonk 6 karakterlik rastgele kısa kod üretir
-    urlGecerliMi, //bu fonk ise verilen string geçerli bir url mi diye kontrol eder
+    isValidUrl, // <<< BURAYI DEĞİŞTİRDİM - bu fonk ise verilen string geçerli bir url mi diye kontrol eder
     // ve her çağırıldgında farklı kod üretir
-    };
+};

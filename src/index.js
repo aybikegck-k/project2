@@ -3,10 +3,13 @@ require('dotenv').config(); //.env dosyasındaki değişkenleri process.env üze
 
 const http = require('http'); //sunucu kurmak için
 const url = require('url'); //url i parçalamak için
+
 const pool = require('./config/db'); // Veritabanı bağlantısı
-const { generateShortCode, urlGecerliMi } = require('./utils/helpers'); // Yeni yardımcı fonksiyonlarımızı içeri aktardık
-//helpers.js :  kısa kod üretme ve url geçerliliği kontrolü
+const { generateShortCode, isValidUrl } = require('./utils/helpers'); // <<< BURASI DEĞİŞTİRİLDİ (urlGecerliMi yerine isValidUrl)
+//helpers.js :  kısa kod üretme ve url geçerliliği kontrolü
+const authController = require('./controllers/authController'); 
 const PORT = process.env.PORT || 3000; //.enc dosyasında port tanımlıysa onu ,yoksa 3000 kullan
+
 
 // Sunucuyu Oluştur
 const server = http.createServer(async (req, res) => { //sunucu isteklerini işleyen ana fonksiyon başlıyor req:gelen istek res:dönecek cevap
@@ -19,7 +22,7 @@ const server = http.createServer(async (req, res) => { //sunucu isteklerini işl
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 //→ CORS başlıkları: Başka domain’lerden gelen isteklere izin ver (özellikle frontend çalışırken lazım).
-   
+
 // OPTIONS isteklerini ele al (Tarayıcılar, POST isteği göndermeden önce bunu yollar)
     if (method === 'OPTIONS') {
         res.writeHead(204); // Başarılı, içerik yok
@@ -36,12 +39,12 @@ const server = http.createServer(async (req, res) => { //sunucu isteklerini işl
             body += chunk.toString();
         });
 
-        req.on('end', async () => {// veri toplandıktan sonra burası çalısır 
+        req.on('end', async () => {// veri toplandıktan sonra burası çalısır
             try {
                 const { originalUrl } = JSON.parse(body); // JSON ı parçalayıp orijinal URL'yi al
 
                 // URL geçerli mi kontrol et
-                if (!originalUrl || !urlGecerliMi(originalUrl)) {
+                if (!originalUrl || !isValidUrl(originalUrl)) { // <<< BURASI DEĞİŞTİRİLDİ (urlGecerliMi yerine isValidUrl)
                     res.writeHead(400, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ error: 'Geçersiz URL formatı.' }));
                     return;
@@ -77,16 +80,18 @@ const server = http.createServer(async (req, res) => { //sunucu isteklerini işl
 
                     // kısa kodu ve orijinal url i Veritabanına kaydetme sorgusu
                     const insertQuery = 'INSERT INTO urls(original_url, short_code) VALUES($1, $2) RETURNING short_code';
-                    //bu satır veritabanına yeni kayıt ekliyor $1 yerine originalUrl $2 yerine chortCode gelir 
+                    //bu satır veritabanına yeni kayıt ekliyor $1 yerine originalUrl $2 yerine chortCode gelir
                     // returnıng shor_code ile eklenen kaydın kısa kodu tekrar alınır
                     const result = await client.query(insertQuery, [originalUrl, shortCode]);
 
                     // Başarılı cevabı döndür
-                    res.writeHead(201), { 'Content-Type': 'application/json' });// 201 http durum kodudur yani created (basarıyla olusturuldu anlamına gelir)
-                    ///*dönen veri json formatında*/ 
-                    res.end(JSON.stringify/({//stringify JavaScript nesnesini JSON formatına dönüştürür,
-                    //  çünkü HTTP yanıtında JSON string olarak gönderilir.
-                         //sunucu yanıtını sonlandırır içindeki veriyi istemciye gönderir
+                    res.writeHead(201, { 'Content-Type': 'application/json' }); // <<< BURADAKİ PARANTEZ HATASI DÜZELTİLDİ
+                    // 201 http durum kodudur yani created (basarıyla olusturuldu anlamına gelir)
+                    ///*dönen veri json formatında*/
+                    res.end(JSON.stringify({ // <<< BURADAKİ JSON.stringify HATASI DÜZELTİLDİ
+                        //stringify JavaScript nesnesini JSON formatına dönüştürür,
+                        //  çünkü HTTP yanıtında JSON string olarak gönderilir.
+                        //sunucu yanıtını sonlandırır içindeki veriyi istemciye gönderir
                         originalUrl: originalUrl,
                         shortUrl: `http://localhost:${PORT}/${result.rows[0].short_code}`
                     }));
@@ -109,13 +114,40 @@ const server = http.createServer(async (req, res) => { //sunucu isteklerini işl
         });
         return; // İşlem bitti, daha fazla kod çalıştırma
     }
+// --- KULLANICI KAYIT İŞLEMİ (POST /register) ---
+if (path === '/register' && method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+        body += chunk.toString();
+    });
 
+    req.on('end', async () => {
+        // authController.registerUser fonksiyonunu çağırıyoruz
+        // req, res ve isteğin body'sini (JSON içeriğini) parametre olarak gönderiyoruz
+        await authController.registerUser(req, res, body);
+    });
+    return; // İşlem bittiği için return ediyoruz
+}
+// --- KULLANICI GİRİŞ İŞLEMİ (POST /login) ---
+if (path === '/login' && method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+        body += chunk.toString();
+    });
+
+    req.on('end', async () => {
+        // authController.loginUser fonksiyonunu çağırıyoruz
+        // req, res ve isteğin body'sini (JSON içeriğini) parametre olarak gönderiyoruz
+        await authController.loginUser(req, res, body);
+    });
+    return; // İşlem bittiği için return ediyoruz
+}
     // --- 2. URL YÖNLENDİRME İŞLEMİ (GET İSTEKLERİ) ---
     // Eğer istek kök dizine (/) gelmezse, kısa kod olduğunu varsayarız
     if (path !== '/') {
         const shortCode = path.substring(1); // URL'den kısa kodu al (ör: '/abcde' -> 'abcde')
 
-        let client; //postgresql için bir client nesnesi tanımmlanıyor 
+        let client; //postgresql için bir client nesnesi tanımmlanıyor
         try { //yukarıda tanımlanan client bu blok içinde kullanılacak
             client = await pool.connect(); // Veritabanı bağlantısı al
             //await *sayesinde bağlantı kurulmadan sonraki kısım çalışmaz
@@ -145,7 +177,7 @@ const server = http.createServer(async (req, res) => { //sunucu isteklerini işl
             if (client) {
                 client.release(); // Bağlantıyı her zaman geri bırak
             }
-           // Veritabanı bağlantısı kapatılır (havuz sisteminde geri bırakılır).
+            // Veritabanı bağlantısı kapatılır (havuz sisteminde geri bırakılır).
         }
         return; // İşlem bitti
     }
