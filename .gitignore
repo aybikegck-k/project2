@@ -1,0 +1,25 @@
+# Node.js bağımlılıkları klasörünü yok say
+node_modules/
+
+# Ortam değişkenleri dosyasını yok say (Çok Önemli!)
+.env
+
+# npm debug log dosyaları
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Mac OS için özel dosyalar
+.DS_Store
+
+# Visual Studio Code için özel klasör (Eğer .vscode içinde kullanıcıya özel ayarlar varsa)
+.vscode/
+
+# Çalışma zamanı/derleme çıktıları (eğer ileride oluşursa)
+build/
+dist/
+
+# Geçici dosyalar ve loglar
+*.log
+*.tmp
+*.bak
