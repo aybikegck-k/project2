@@ -1,4 +1,5 @@
 // src/config/db.js
+//Veritabanı bağlantısı gibi yapılandırma dosyalarını içeriyor (db.js).
 require('dotenv').config(); // gizli bilgileri .env dosyasından yükle
 
 const { Pool } = require('pg'); //postgresgl ile konusacak aracı getir

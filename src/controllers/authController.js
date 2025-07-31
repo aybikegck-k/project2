@@ -19,9 +19,12 @@ if (!JWT_SECRET) {
 
 // --- Kullanıcı Kayıt İşlemi (POST /register) ---
 // Bu fonksiyon, yeni bir kullanıcı kaydı oluşturma isteğini işler.
+
+
 const registerUser = async (req, res, body) => {
     let client; // Veritabanı bağlantı nesnesi için bir yer tutucu
     try {
+        console.log("Gelen body:", body);
         // İsteğin body'sinden gelen JSON verisini ayrıştırıyoruz.
         // username, email ve password bilgilerini çıkarıyoruz.
         const { username, email, password } = JSON.parse(body);
