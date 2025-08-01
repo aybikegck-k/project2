@@ -87,6 +87,7 @@ const server = http.createServer(async (req, res) => {
     // --- URL KISALTMA İŞLEMİ (POST /shorten) ---
     // Bu endpoint, hem kayıtlı hem de anonim kullanıcılar tarafından kullanılabilir.
     // Tüm URL kısaltma mantığı artık urlController.js dosyasına taşındı.
+
     if (path === '/shorten' && method === 'POST') {
         let body = '';
         req.on('data', chunk => { // İsteğin body'sindeki verileri parça parça oku
@@ -106,6 +107,25 @@ const server = http.createServer(async (req, res) => {
         });
         return; // req.on('end') olayını bekliyoruz, bu nedenle burada fonksiyonu sonlandırıyoruz.
     }
+
+
+ // <<<<<<<<< BU KOD BLOĞUNU src/index.js DOSYANIZA EKLEYİN >>>>>>>>>
+
+    // --- KULLANICININ URL'LERİNİ LİSTELEME İŞLEMİ (GET /urls) ---
+    // Bu endpoint, sadece kimliği doğrulanmış (giriş yapmış) kullanıcıların erişebileceği kendi kısaltılmış URL'lerini listeler.
+    if (path === '/urls' && method === 'GET') {
+        // authMiddleware.authenticateToken'ı çağırıyoruz.
+        // Bu middleware, Authorization başlığında bir JWT token olup olmadığını kontrol eder,
+        // doğrular ve geçerliyse req.user objesini kullanıcı bilgileriyle doldurur.
+        // Ardından, içindeki callback fonksiyonunu çalıştırır (yani urlController.listUserUrls).
+        await authMiddleware.authenticateToken(req, res, async () => {
+            // urlController'daki listUserUrls fonksiyonunu çağırıyoruz.
+            // req, res ve PORT (kısaltılmış URL'leri oluşturmak için) parametrelerini iletiyoruz.
+            await urlController.listUserUrls(req, res, PORT);
+        });
+        return; // İşlem bittiği için fonksiyonu sonlandır.
+    }
+
 
     // <<<<<<<<< DEĞİŞTİRİLEN KOD BLOĞU BAŞLANGICI (URL YÖNLENDİRME ARTIK urlController'da) >>>>>>>>>
     // --- URL YÖNLENDİRME İŞLEMİ (GET İSTEKLERİ) ---

@@ -146,6 +146,14 @@ const redirectUrl = async (req, res, shortCode) => {
 
         if (result.rows.length > 0) { // Eğer veritabanında bu kısa koda ait bir orijinal URL bulunursa:
             const originalUrl = result.rows[0].original_url; // Orijinal URL'yi al
+            // Bu kod bloğu, "tıklama sayısı"nı artırmak için gerekli.
+            // Orijinal URL bulundu, şimdi tıklama sayısını artırıyoruz.
+            await client.query(
+                'UPDATE urls SET click_count = click_count + 1 WHERE short_code = $1',
+                [shortCode]
+            );
+            console.log(` Kısa kod '${shortCode}' için tıklama sayısı artırıldı.`);
+
             res.writeHead(302, { 'Location': originalUrl }); // 302 Found (Bulundu) yanıtı ile tarayıcıyı orijinal URL'ye yönlendir.
             res.end(); // Yanıtı sonlandır.
         } else {
