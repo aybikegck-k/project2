@@ -2,7 +2,9 @@
 // Bu dosya, HTTP isteklerinin kimlik doğrulamasını (JWT kontrolü) yapar.
 
 const jwt = require('jsonwebtoken'); // JWT işlemleri için gerekli kütüphane
-require('dotenv').config();         // .env dosyasındaki ortam değişkenlerini yükler (JWT_SECRET için)
+require('dotenv').config();  // .env dosyasındaki ortam değişkenlerini yükler (JWT_SECRET için)
+
+console.log('Middleware JWT_SECRET:', process.env.JWT_SECRET);
 
 // JWT gizli anahtarını .env dosyasından alıyoruz.
 // Bu anahtar, token'ları imzalamak ve doğrulamak için kullanılır. ÇOK GİZLİ TUTULMALIDIR.
@@ -26,6 +28,24 @@ const authenticateToken = async (req, res, callback) => {
     // Kullanıcılar JWT token'larını bu başlık içinde gönderirler.
     // Formatı genellikle "Bearer TOKEN_DEĞERİ" şeklindedir.
     const authHeader = req.headers['authorization'];
+    // src/middlewares/authMiddleware.js
+const authenticateToken = async (req, res, callback) => {
+    const authHeader = req.headers['authorization'];
+    
+    // <<< Bu satırları ekleyin <<<
+    console.log('Gelen Authorization Başlığı:', authHeader);
+    const token = authHeader && authHeader.split(' ')[1];
+    console.log('Middleware Tarafından Ayrıştırılan Token:', token);
+    // >>> Buraya kadar <<<
+
+    if (!token) {
+        req.user = null;
+        await callback();
+        return;
+    }
+
+    // ... (geri kalan kod)
+};
     // authHeader varsa ve "Bearer " ile başlıyorsa, token değerini ayırarak alıyoruz.
     const token = authHeader && authHeader.split(' ')[1];
 

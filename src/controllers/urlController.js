@@ -33,14 +33,14 @@ const shortenUrl = async (req, res, body, PORT) => {
     // 'x-forwarded-for' başlığı genellikle proxy veya load balancer arkasındayken gerçek istemci IP'sini sağlar.
     // Eğer bu başlık yoksa, req.socket.remoteAddress doğrudan bağlantının IP adresini verir (yerel testlerde genelde bu kullanılır).
     const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    console.log(`https://tureng.com/en/turkish-english/k%C4%B1saltma Gelen istek IP: ${ipAddress}`);
+    console.log(`Gelen istek IP: ${ipAddress}`);
 
     // --- ANONİM KISALTMA LİMİT KONTROLÜ ---
     // Eğer req.user objesi yoksa (yani kullanıcı kimlik doğrulamadan geçmemişse, anonimse):
     if (!req.user) {
         // İlgili IP adresi için istek sayısını bir artır. Eğer IP daha önce yoksa 0'dan başlar.
         anonymousRequestCounts[ipAddress] = (anonymousRequestCounts[ipAddress] || 0) + 1;
-        console.log(`https://tureng.com/en/turkish-english/k%C4%B1saltma Anonim istek sayısı (${ipAddress}): ${anonymousRequestCounts[ipAddress]}`);
+        console.log(` Anonim istek sayısı (${ipAddress}): ${anonymousRequestCounts[ipAddress]}`);
 
         // Eğer anonim istek sayısı belirlenen limiti aşarsa:
         if (anonymousRequestCounts[ipAddress] > ANONYMOUS_LIMIT) {
@@ -103,12 +103,13 @@ const shortenUrl = async (req, res, body, PORT) => {
                 originalUrl: originalUrl, // Orijinal uzun URL
                 shortUrl: `http://localhost:${PORT}/${result.rows[0].short_code}`, // Kısaltılmış URL
                 // Mesajı, kullanıcının giriş durumuna göre özelleştir.
-                message: userId ? "URL başarıyla kısaltıldı." : "URL başarıyla kısaltıldı (anonim)."
+                message: userId ? "URL başarıyla kısaltıldı." : "URL başarıyla kısaltıldı (anonim).",
+                remainingUses: req.user ? null : (ANONYMOUS_LIMIT - anonymousRequestCounts[ipAddress])
             }));
 
         } catch (dbErr) {
             // Veritabanı işlemi sırasında oluşabilecek hataları yakala
-            console.error('https://tureng.com/en/turkish-english/k%C4%B1saltma Veritabanı işlemi sırasında hata:', dbErr.message);
+            console.error(' Veritabanı işlemi sırasında hata:', dbErr.message);
             // Eğer yanıt başlıkları zaten gönderilmediyse (önceki bir hata veya işlemden dolayı),
             // 500 Internal Server Error (Sunucu Hatası) yanıtı gönderilir.
             if (!res.headersSent) {
@@ -123,7 +124,7 @@ const shortenUrl = async (req, res, body, PORT) => {
         }
     } catch (handlerError) {
         // JSON ayrıştırma hatası veya genel işlem hatalarını yakala
-        console.error('https://tureng.com/en/turkish-english/k%C4%B1saltma İstek işleme sırasında hata:', handlerError.message);
+        console.error(' İstek işleme sırasında hata:', handlerError.message);
         if (!res.headersSent) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'İstek işlenirken bir sorun oluştu veya JSON formatı geçersiz.' }));
@@ -163,7 +164,7 @@ const redirectUrl = async (req, res, shortCode) => {
         }
     } catch (dbErr) {
         // Veritabanı sorgusu sırasında oluşabilecek hataları yakala
-        console.error('https://tureng.com/tr/turkce-ingilizce/y%C3%B6nlendirmek Veritabani sorgusu sirasinda hata:', dbErr.message);
+        console.error(' Veritabani sorgusu sirasinda hata:', dbErr.message);
         if (!res.headersSent) { // Eğer yanıt başlıkları zaten gönderilmediyse
             res.writeHead(500, { 'Content-Type': 'application/json' }); // 500 Internal Server Error (Sunucu Hatası)
             res.end(JSON.stringify({ error: 'Sunucu hatasi: Yönlendirme başarisiz.' }));
@@ -175,11 +176,68 @@ const redirectUrl = async (req, res, shortCode) => {
         }
     }
 };
-// <<<<<<<<< YENİ EKLENEN KOD BLOĞU SONU >>>>>>>>>
+// src/controllers/urlController.js
+// ... (mevcut require'lar ve sabitleriniz: pool, generateShortCode, isValidUrl, anonymousRequestCounts, ANONYMOUS_LIMIT)
+
+// shortenUrl fonksiyonunuz burada olmalı
+// ...
+
+// redirectUrl fonksiyonunuz burada olmalı
+// ...
+
+// Kullanıcının kısaltılmış URL'lerini listeleme fonksiyonu
+const listUserUrls = async (req, res, PORT) => {
+    if (!req.user || !req.user.id) {
+        console.error("listUserUrls: req.user veya req.user.id bulunamadı.");
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: "Kimlik doğrulaması gereklidir veya kullanıcı bilgisi eksik." }));
+        return;
+    }
+
+    const userId = req.user.id; // Giriş yapmış kullanıcının ID'si
+
+    let client;
+    try {
+        client = await pool.connect();
+
+        const query = `
+            SELECT original_url, short_code, click_count, created_at
+            FROM urls
+            WHERE user_id = $1
+            ORDER BY created_at DESC;
+        `;
+        const result = await client.query(query, [userId]);
+
+        const urls = result.rows.map(row => ({
+            originalUrl: row.original_url,
+            shortCode: row.short_code,
+            shortUrl: `http://localhost:${PORT}/${row.short_code}`,
+            clickCount: row.click_count,
+            createdAt: row.created_at
+        }));
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            message: "Kısaltılmış URL'ler başarıyla listelendi.",
+            urls: urls
+        }));
+
+    } catch (dbErr) {
+        console.error('Veritabanından kullanıcı URL\'lerini çekerken hata:', dbErr.message);
+        if (!res.headersSent) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Sunucu hatası: URL\'ler listelenemedi.' }));
+        }
+    } finally {
+        if (client) {
+            client.release();
+        }
+    }
+};
+
 
 module.exports = {
-    shortenUrl, // shortenUrl fonksiyonunu dışa aktarıyoruz
-    // <<<<<<<<< YENİ EKLEDİK (redirectUrl'yi dışa aktarıyoruz) >>>>>>>>>
-    redirectUrl // redirectUrl fonksiyonunu da dışa aktarıyoruz
-    // <<<<<<<<< YENİ EKLEDİK SONU >>>>>>>>>
+    shortenUrl,
+    redirectUrl,
+    listUserUrls // fonksiyonlar dışa aktarılıyor
 };

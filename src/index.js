@@ -4,7 +4,10 @@
 require('dotenv').config(); // .env dosyasındaki değişkenleri process.env üzerinden kullanabilmek için yüklüyoruz
 
 const http = require('http'); // HTTP sunucusu kurmak için gerekli modül (Node.js'in çekirdek modülü)
-const url = require('url');   // URL'leri parçalamak (parse etmek) için gerekli modül (Node.js'in çekirdek modülü)
+const url = require('url');   // URL'leri parçalamak (parse etmek) için gerekli modül (Node.js'in çekirdek modülü)
+const fs = require('fs').promises; // frontend için dosya sistemi işlemleri (PROMISE TABANLI OLARAK DEĞİŞTİRDİK)
+const path = require('path'); // frontend için yol işlemleri
+
 
 const pool = require('./config/db'); // Veritabanı bağlantı havuzumuz (PostgreSQL) - Veritabanı işlemleri için kullanılır
 
@@ -18,7 +21,7 @@ const pool = require('./config/db'); // Veritabanı bağlantı havuzumuz (Postgr
 const authController = require('./controllers/authController'); // Kullanıcı kayıt ve giriş (authentication) işlemleri için kontrolcü
 const authMiddleware = require('./middlewares/authMiddleware'); // JWT doğrulama middleware'i - İstekleri doğrulamak için kullanılır
 
-// <<<<<<<<< YENİ EKLENEN KOD BLOĞU BAŞLANGICI >>>>>>>>>
+// <<<<<<<<< YENİ EKLENEN KOD BLOĞU BAŞLANTILARI >>>>>>>>>
 // urlController modülünü içeri aktarıyoruz. Bu, URL kısaltma ve yönlendirme mantığını içerir.
 const urlController = require('./controllers/urlController'); 
 // <<<<<<<<< YENİ EKLENEN KOD BLOĞU SONU >>>>>>>>>
@@ -34,10 +37,61 @@ const PORT = process.env.PORT || 3000; // .env dosyasında PORT tanımlıysa onu
 
 // --- HTTP Sunucusunu Oluştur ---
 // http.createServer metodu, her gelen HTTP isteği için belirtilen async fonksiyonu çalıştırır.
-const server = http.createServer(async (req, res) => { 
+    const server = http.createServer(async (req, res) => { 
     const parsedUrl = url.parse(req.url, true); // Gelen isteğin URL'sini parçalara ayırır (örn: pathname, query parametreleri)
-    const path = parsedUrl.pathname;             // URL'nin yol kısmını alır (örn: "/shorten", "/abcde")
-    const method = req.method;                   // Gelen isteğin HTTP metodunu alır (örn: "GET", "POST", "OPTIONS")
+    let pathname = parsedUrl.pathname; // pathname'i 'let' yapıyoruz çünkü aşağıda değiştirebiliriz
+    const method = req.method;
+
+    // --- ÖNEMLİ: STATİK DOSYA SUNUMU BAŞLANGICI ---
+    // Bu kısım, API rotalarından ÖNCE ve senkron bir şekilde kontrol edilmelidir.
+
+    const PUBLIC_DIR = path.join(__dirname, '..', 'frontend'); // 'src' klasöründen 'public' klasörüne giden yol
+
+    // Eğer tarayıcı sadece '/' (kök dizini) isterse, 'index.html'i varsay.
+    const requestedPath = (pathname === '/') ? '/index.html' : pathname;
+    const filePath = path.join(PUBLIC_DIR, requestedPath); // Dosyanın tam yolunu oluştur
+
+    try {
+        const stats = await fs.stat(filePath); // Dosyanın varlığını ve tipini kontrol et
+        if (stats.isFile()) { // Eğer gerçekten bir dosya ise
+            const data = await fs.readFile(filePath); // fs.promises.readFile kullanıyoruz
+
+            // Dosya türüne göre Content-Type başlığını ayarla
+            let contentType = 'text/html';
+            if (filePath.endsWith('.css')) {
+                contentType = 'text/css';
+            } else if (filePath.endsWith('.js')) {
+                contentType = 'application/javascript';
+            } else if (filePath.endsWith('.png')) {
+                contentType = 'image/png';
+            } else if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) {
+                contentType = 'image/jpeg';
+            } else if (filePath.endsWith('.gif')) {
+                contentType = 'image/gif';
+            } else if (filePath.endsWith('.svg')) {
+                contentType = 'image/svg+xml';
+            } else if (filePath.endsWith('.ico')) {
+                contentType = 'image/x-icon';
+            } else if (filePath.endsWith('.json')) { // Eğer ileride bir JSON dosyası sunarsanız
+                contentType = 'application/json';
+            }
+            // Diğer dosya türlerini buraya ekleyebilirsiniz
+
+            res.writeHead(200, { 'Content-Type': contentType });
+            res.end(data);
+            return; // Statik dosya başarıyla gönderildi, DİĞER HİÇBİR KOD BLOĞUNA GİTME
+        }
+    } catch (err) {
+        // Dosya bulunamadıysa (ENOENT hatası) veya başka bir hata varsa,
+        // bu statik dosya isteği değildir, akışı API rotalarına bırak.
+        if (err.code !== 'ENOENT') { // ENOENT dışındaki hataları konsola yazdır
+            console.error(`Statik dosya işleme hatası (${filePath}):`, err);
+            // Ciddi bir hata ise 500 dönebiliriz, ancak şimdilik akışı API'ye bırakalım
+        }
+    }
+
+    // --- STATİK DOSYA SUNUMU SONU ---
+
 
     // --- CORS (Çapraz Kaynak Paylaşımı) Başlıkları ---
     // Bu başlıklar, farklı bir kaynaktan (örn. bir frontend uygulaması veya başka bir alan adı) 
@@ -52,13 +106,13 @@ const server = http.createServer(async (req, res) => {
     // sunucuya bir "OPTIONS" (preflight) isteği yollar. Bu, güvenlik amacıyla sunucunun izinlerini kontrol etmesini sağlar.
     if (method === 'OPTIONS') {
         res.writeHead(204); // 204 No Content: İstek başarıyla işlendi ama döndürülecek içerik yok
-        res.end();          // Yanıtı sonlandır
-        return;             // Fonksiyonu burada sonlandır, daha fazla kod çalıştırma
+        res.end();// Yanıtı sonlandır
+        return;// Fonksiyonu burada sonlandır, daha fazla kod çalıştırma
     }
 
     // --- KULLANICI KAYIT İŞLEMİ (POST /register) ---
     // Yeni bir kullanıcı kaydı için POST isteğini dinler.
-    if (path === '/register' && method === 'POST') {
+        if (pathname === '/api/register' && method === 'POST') {
         let body = '';
         req.on('data', chunk => { // İsteğin body'sindeki verileri parça parça oku (veri akışı olduğu için 'chunk'lar halinde gelir)
             body += chunk.toString(); // Okunan parçaları birleştir (string olarak)
@@ -72,7 +126,7 @@ const server = http.createServer(async (req, res) => {
 
     // --- KULLANICI GİRİŞ İŞLEMİ (POST /login) ---
     // Kullanıcı girişi ve JWT token'ı almak için POST isteğini dinler.
-    if (path === '/login' && method === 'POST') {
+    if (pathname === '/api/login' && method === 'POST') {
         let body = '';
         req.on('data', chunk => { // İsteğin body'sindeki verileri parça parça oku
             body += chunk.toString(); // Okunan parçaları birleştir (string olarak)
@@ -88,7 +142,7 @@ const server = http.createServer(async (req, res) => {
     // Bu endpoint, hem kayıtlı hem de anonim kullanıcılar tarafından kullanılabilir.
     // Tüm URL kısaltma mantığı artık urlController.js dosyasına taşındı.
 
-    if (path === '/shorten' && method === 'POST') {
+    if (pathname === '/api/shorten' && method === 'POST') {
         let body = '';
         req.on('data', chunk => { // İsteğin body'sindeki verileri parça parça oku
             body += chunk.toString(); // Okunan parçaları birleştir (string olarak)
@@ -109,11 +163,11 @@ const server = http.createServer(async (req, res) => {
     }
 
 
- // <<<<<<<<< BU KOD BLOĞUNU src/index.js DOSYANIZA EKLEYİN >>>>>>>>>
+    // <<<<<<<<< BU KOD BLOĞUNU src/index.js DOSYANIZA EKLEYİN >>>>>>>>>
 
     // --- KULLANICININ URL'LERİNİ LİSTELEME İŞLEMİ (GET /urls) ---
     // Bu endpoint, sadece kimliği doğrulanmış (giriş yapmış) kullanıcıların erişebileceği kendi kısaltılmış URL'lerini listeler.
-    if (path === '/urls' && method === 'GET') {
+    if (pathname === '/api/urls' && method === 'GET') {
         // authMiddleware.authenticateToken'ı çağırıyoruz.
         // Bu middleware, Authorization başlığında bir JWT token olup olmadığını kontrol eder,
         // doğrular ve geçerliyse req.user objesini kullanıcı bilgileriyle doldurur.
@@ -132,8 +186,8 @@ const server = http.createServer(async (req, res) => {
     // Eğer gelen istek bir GET metoduysa VE path kök dizin '/' değilse (örn: "/abcde"),
     // bunun kısaltılmış bir URL olduğunu varsayarız ve yönlendirme işlemini başlatırız.
     // Bu mantık artık urlController.redirectUrl fonksiyonuna taşındı.
-    if (method === 'GET' && path !== '/') {
-        const shortCode = path.substring(1); // URL'den kısa kodu al (örn: '/abcde' -> 'abcde', ilk '/' kaldırılır)
+    if (method === 'GET' && pathname.length > 1) { // pathname.length > 1 kontrolü ile '/' dışındaki her şeyi yakala
+        const shortCode = pathname.substring(1); // URL'den kısa kodu al (örn: '/abcde' -> 'abcde', ilk '/' kaldırılır)
         // urlController'daki redirectUrl fonksiyonunu çağırıyoruz.
         // Bu fonksiyon, kısa kodu veritabanında arayıp orijinal URL'ye yönlendirme işlemini yapacak.
         await urlController.redirectUrl(req, res, shortCode);
@@ -142,16 +196,12 @@ const server = http.createServer(async (req, res) => {
     // <<<<<<<<< DEĞİŞTİRİLEN KOD BLOĞU SONU >>>>>>>>>
 
 
-    // --- 3. ANA SAYFA VE DİĞER İSTEKLER ---
-    // Eğer yukarıdaki koşulların hiçbiri eşleşmezse (yani ana sayfaya "/" istek gelirse)
-    if (path === '/') {
-        res.writeHead(200, { 'Content-Type': 'text/plain' }); // 200 OK: Başarı kodu, yanıt metin (plain text) formatında olacak
-        res.end('URL Kisaltma Servisi Calisiyor! Uzun bir URL kisaltmak icin /shorten adresine POST istegi gonderin.');
-    } else {
-        // Genel 404 (bulunamadı) hatası - Yukarıdaki rotalarla eşleşmeyen tüm istekler için
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('Sayfa Bulunamadi.');
-    }
+    // --- 404 (BULUNAMADI) HATASI ---
+    // Eğer yukarıdaki hiçbir statik dosya veya API rota eşleşmezse, 404 Not Found gönder.
+    // Bu kısım artık ana sayfa isteği için "URL Kisaltma Servisi Calisiyor!" mesajını içermemeli,
+    // çünkü ana sayfa isteği yukarıdaki statik dosya sunumu tarafından yakalanmalı.
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('404 Not Found: Aradiginiz sayfa veya kaynak bulunamadi.');
 });
 
 // Sunucuyu Belirtilen Portta Dinlemeye Başla

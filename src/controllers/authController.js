@@ -2,6 +2,7 @@
 // HTTP isteklerini işleyen ana mantık fonksiyonlarını (örneğin kullanıcı kayıt, giriş, URL kısaltma gibi) içerecek.
 
 require('dotenv').config(); // .env dosyasındaki değişkenlere bu dosya içinden erişmek için
+console.log('Auth Controller JWT_SECRET:', process.env.JWT_SECRET);
 
 const pool = require('../config/db');     // Veritabanı bağlantı havuzunu alıyoruz
 const bcrypt = require('bcryptjs');       // Şifreleri hashlemek için
@@ -45,8 +46,7 @@ const registerUser = async (req, res, body) => {
         }
 
         // --- 2. Veritabanı Bağlantısı ve Mevcut Kullanıcı Kontrolü ---
-        client = await pool.connect(); // Veritabanı bağlantı havuzundan bir istemci al
-
+        client = await pool.connect(); // Veritabanı bağlantı havuzundan bir istemci 
         // Aynı kullanıcı adı veya e-posta ile başka bir kullanıcı var mı diye kontrol et.
         const checkUserQuery = 'SELECT id FROM users WHERE username = $1 OR email = $2';
         const checkUserResult = await client.query(checkUserQuery, [username, email]);

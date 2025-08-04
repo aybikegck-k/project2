@@ -1,0 +1,529 @@
+/* Genel Stil Resetleri ve Fontlar */
+body {
+    font-family: 'Poppins', sans-serif; /* Ana font */
+    background-color: #fce4ec; /* Daha yumuşak, pudra pembesi arka plan */
+    margin: 0;
+    color: #4A148C; /* Koyu morumsu bordo yazı rengi */
+    line-height: 1.6;
+    display: flex; /* Footer'ı alta sabitlemek için */
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Başlıklar */
+h1, h2, h3 {
+    font-family: 'Montserrat', sans-serif; /* Başlıklar için farklı, daha güçlü bir font */
+    color: #880E4F; /* Derin bordo pembe */
+    margin-bottom: 15px; /* Başlıklar arası varsayılan boşluk */
+}
+
+h1 {
+    font-size: 2.8em;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 15px;
+    color: #C2185B; /* Daha baskın pembe ana başlık */
+}
+
+h2 {
+    font-size: 1.8em;
+    font-weight: 600;
+    color: #E91E63; /* Canlı pembe alt başlıklar */
+    margin-bottom: 15px;
+}
+
+h3 {
+    font-size: 1.3em;
+    font-weight: 600;
+    color: #AB47BC; /* Morumsu pembe H3 */
+}
+
+p {
+    color: #6A1B9A; /* Koyu mor paragraf yazısı */
+    margin-bottom: 10px; /* Paragraflar arası varsayılan boşluk */
+}
+
+a {
+    color: #AD1457; /* Link rengi (daha canlı morumsu pembe) */
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #D81B60; /* Hover'da daha koyu pembe */
+    text-decoration: underline;
+}
+
+/* Ana Çerçeve ve Düzen */
+.main-wrapper {
+    flex-grow: 1; /* İçeriğin sayfayı kaplamasını sağlar, footer'ı alta iter */
+    width: 95%;
+    max-width: 1200px; /* Daha geniş bir ana çerçeve */
+    margin: 30px auto; /* Üstten ve alttan 30px boşluk, yanlardan ortala */
+    background-color: #ffffff;
+    border-radius: 25px; /* Daha da yuvarlak köşeler */
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.18); /* Daha belirgin gölge */
+    padding: 40px; /* İç padding (kenarlardan boşluk) */
+    display: flex;
+    flex-direction: column; /* İçerik dikey, sonra iki sütun */
+}
+
+.header-section {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 30px;
+    border-bottom: 2px dashed #FFCDD2; /* Başlık altına çizgi */
+}
+
+.brand-logo {
+    font-size: 3.8em; /* Kedi ikonu ve metin boyutu */
+    font-weight: 700;
+    color: #E91E63; /* Canlı pembe */
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+    animation: bounceIn 1s ease-out; /* Giriş animasyonu */
+    display: flex; /* İkon ve metni yanyana hizalamak için */
+    align-items: center; /* Dikeyde ortala */
+    justify-content: center; /* Yatayda ortala */
+    gap: 10px; /* İkon ile metin arasına boşluk */
+    transform-style: preserve-3d;
+    perspective: 1000px;
+}
+
+.brand-logo i {
+    font-size: 1.1em; /* Kedi ikonunu biraz daha büyük yap */
+    color: #AD1457; /* Kedi ikonuna daha koyu ve canlı bir pembe tonu */
+    transition: transform 0.4s ease-in-out, color 0.4s ease;
+    transform: rotateY(0deg) translateZ(0);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.brand-logo:hover i {
+    transform: rotateY(20deg) scale(1.1) translateZ(10px); /* Hover'da kedi ikonu dönsün, büyüsün ve öne çıksın */
+    color: #D81B60; /* Hover'da ikon rengi daha canlı */
+}
+
+.brand-logo i.fa-cat {
+    animation: purr 4s infinite ease-in-out;
+}
+
+@keyframes purr {
+    0% { transform: rotateY(0deg) translateZ(0); }
+    10% { transform: rotateY(5deg) translateZ(2px); }
+    20% { transform: rotateY(-5deg) translateZ(-2px); }
+    30% { transform: rotateY(5deg) translateZ(2px); }
+    40% { transform: rotateY(-5deg) translateZ(-2px); }
+    50% { transform: rotateY(0deg) translateZ(0); }
+    100% { transform: rotateY(0deg) translateZ(0); }
+}
+
+@keyframes bounceIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.tagline {
+    font-size: 1.4em;
+    color: #C2185B;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+/* İki Sütunlu İçerik Alanı - ANA HİZALAMA KONTROLÜ */
+.content-area {
+    display: flex;
+    gap: 30px; /* Sütunlar arası boşluk */
+    flex-wrap: wrap; /* Küçük ekranlarda alt alta geçsin */
+    margin-top: 30px;
+    /* ÖNEMLİ DÜZELTME: Sütunların üst kenarlarını hizalamak için */
+    align-items: flex-start; /* Tüm esnek öğeleri (sütunları) üstten hizala */
+}
+
+.left-column {
+    flex: 2; /* Sol sütun daha geniş */
+    min-width: 400px; /* Min genişlik */
+    display: flex;
+    flex-direction: column; /* İçindeki öğeleri dikey sırala */
+    gap: 30px; /* Sol sütundaki kutular arası boşluk */
+}
+
+.right-column {
+    flex: 1; /* Sağ sütun daha dar */
+    min-width: 300px; /* Min genişlik */
+    background-color: #F8BBD0; /* Sağ sütun için hafif pembe arka plan */
+    border-radius: 18px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); /* Daha yumuşak gölge */
+    padding: 30px; /* Sağ sütunun kendi iç padding'i */
+    box-sizing: border-box; /* Padding'in genişliğe dahil olmasını sağla */
+    display: flex; /* İçerideki elementleri dikeyde düzenlemek için */
+    flex-direction: column;
+    gap: 30px; /* Sağ sütundaki kutular arası boşluk */
+    
+}
+
+/* Tüm Kutu Stilleri - TUTARLILIK İÇİN GENEL VE ÖZEL AYARLAR */
+/* Tüm ana kutucuklar için varsayılan stil */
+.form-section, .info-section, .urls-section, .auth-section, .features-highlight {
+    background-color: #FFFFFF;
+    border: 2px solid #FF527B;
+    border-radius: 15px;
+    padding: 30px; /* Tüm kutular için varsayılan iç boşluk */
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.03); /* Daha hafif iç gölge */
+    box-sizing: border-box; /* Padding'in kutu genişliğine dahil olmasını sağla */
+    /* ÖNEMLİ DÜZELTME: İç kutuların kendi üst marginlerini sıfırlıyoruz */
+    /* Sütunlardaki `gap` zaten boşlukları yönetiyor, bu yüzden elementlerin kendi marginleri çakışmasın */
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+/* Öne çıkan "Link Kısalt!" bölümü (featured-section) */
+/* Bu kutunun diğerlerinden biraz daha büyük olmasını istiyoruz */
+.featured-section {
+    background-color: #F8BBD0; /* Link kısaltma için daha dikkat çekici pembe */
+    border-color: #E91E63;
+    padding: 40px; /* featured-section'a daha fazla padding verdik */
+    box-shadow: 0 5px 20px rgba(233, 30, 99, 0.2); /* Canlı pembe gölge */
+}
+
+/* Hesabım kutusu (auth-section) */
+/* featured-section ile aynı padding'i vererek hizalamayı sağlıyoruz */
+/* Ayrıca içindeki h2 ve p etiketlerinin üst marjinlerini sıfırlıyoruz */
+.auth-section {
+    padding: 40px; /* featured-section ile aynı padding'i vererek hizalamayı sağlıyoruz */
+    /* Kendi background, border, shadow değerlerini korur */
+    background-color: #ffffff; /* Arka plan rengini diğer kutularla aynı yaptık */
+    border: 2px solid #FF527B;
+    border-radius: 15px;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+/* ÖNEMLİ DÜZELTME: Kutuların içindeki ilk başlık ve paragrafların marjinlerini sıfırla */
+/* Bu, içerik kutularının (featured-section, auth-section vb.) kendi paddingleriyle tutarlı başlama noktası sağlar */
+.featured-section h2:first-child,
+.auth-section h2:first-child,
+.info-section h2:first-child,
+.urls-section h2:first-child,
+.features-highlight h3:first-child {
+    margin-top: 0; /* İçindeki ilk başlığın üst marjini sıfırlanır */
+}
+
+.featured-section p:first-of-type,
+.auth-section p:first-of-type,
+.info-section p:first-of-type,
+.urls-section p:first-of-type,
+.features-highlight p:first-of-type {
+    margin-top: 0; /* İçindeki ilk paragrafın üst marjini sıfırlanır */
+}
+
+
+/* Yeni Eklenen Kutu Stili (Neden Linkie Kullanmalısın?) */
+.features-highlight {
+    background-color: #ffffff; /* Daha canlı bir pembe arka plan */
+    border-color: #FF527B; /* Daha belirgin bir kenarlık */
+    text-align: center;
+    padding: 35px; /* Biraz daha padding */
+    box-sizing: border-box; /* Padding'in genişliğe dahil olmasını sağla */
+}
+
+.features-highlight h3 {
+    color: #AD1457; /* Başlık rengini belirginleştir */
+    margin-bottom: 15px;
+}
+
+.features-highlight ul {
+    list-style: none; /* Madde işaretlerini kaldır */
+    padding: 0;
+    margin: 0;
+    font-size: 0.95em;
+    color: #6A1B9A;
+}
+
+.features-highlight ul li {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Ortalamak için */
+    gap: 10px; /* İkon ve metin arası boşluk */
+}
+
+.features-highlight ul li i {
+    color: #D81B60; /* İkon rengi */
+    font-size: 1.2em;
+}
+
+
+/* Input ve Butonlar */
+.input-group {
+    display: flex;
+    flex-wrap: wrap; /* Küçük ekranlarda alt alta */
+    gap: 10px;
+    margin-bottom: 15px;
+    align-items: center;
+}
+
+.input-group input {
+    flex-grow: 1;
+    padding: 15px;
+    border: 1px solid #F48FB1;
+    border-radius: 10px;
+    font-size: 1.1em;
+    color: #4A148C;
+    background-color: #FFF;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    min-width: 200px; /* Inputun minimum genişliği */
+}
+
+.input-group input:focus {
+    border-color: #D81B60;
+    box-shadow: 0 0 8px rgba(216, 27, 96, 0.2);
+    outline: none;
+}
+
+/* Anonim Giriş Limiti Bilgilendirme Stili */
+.guest-info {
+    font-size: 0.95em;
+    color: #880E4F; /* Yazı rengi */
+    text-align: center;
+    margin-bottom: 20px; /* Alttan boşluk bırak */
+    padding: 10px; /* İç boşluk */
+    border-radius: 8px; /* Köşeleri yuvarla */
+    background-color: #FFF2F7; /* Hafif bir arka plan */
+    border: 1px dashed #FF527B; /* Kesik çizgi kenarlık */
+}
+
+.guest-info span {
+    font-weight: 700; /* Kalan hakkı kalın yap */
+    color: #E91E63; /* Kalan hakkı daha belirgin pembe yap */
+}
+
+button {
+    background-color: #880E4F; /* Genel buton rengi */
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 3px 10px rgba(171, 71, 188, 0.2); /* Daha yumuşak gölge */
+}
+
+button:hover {
+    background-color: #8E24AA;
+    transform: translateY(-2px);
+}
+
+/* Linkie'le Butonu (Büyük ve Öne Çıkan) */
+button#shortenBtn {
+    background-color: #C2185B; /* En baskın pembe */
+    color: white;
+    padding: 18px 40px;
+    font-size: 1.3em;
+    font-weight: 700;
+    border-radius: 12px;
+    box-shadow: 0 6px 15px rgba(194, 24, 91, 0.4); /* Daha yumuşak gölge */
+    flex-shrink: 0; /* Küçülmesini engelle */
+}
+
+button#shortenBtn:hover {
+    background-color: #AD1457; /* Daha koyu pembe */
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(173, 20, 87, 0.5);
+}
+
+/* Auth Butonları (Küçük ve Hafif) */
+.auth-buttons {
+    display: flex;
+    justify-content: center; /* Butonları ortala */
+    gap: 10px;
+    margin-bottom: 20px; /* Formlar ile arasına boşluk */
+}
+
+.auth-buttons button {
+    background-color: #FF527B; /* Canlı pembe */
+    color: white;
+    padding: 10px 22px;
+    font-size: 0.95em;
+    font-weight: 400; /* Daha az kalın */
+    border-radius: 6px;
+    margin: 0; /* Üstteki margin'i sıfırladık */
+    box-shadow: 0 2px 5px rgba(255, 82, 123, 0.2); /* Daha yumuşak gölge */
+}
+
+.auth-buttons button:hover {
+    background-color: #E91E63;
+    transform: translateY(-1px);
+}
+
+/* Sonuç ve Mesaj Kutuları */
+.result, .message {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1em;
+    word-wrap: break-word;
+}
+
+.result {
+    background-color: #FFEBF2; /* Daha açık pembe */
+    border: 2px dashed #F48FB1;
+    color: #880E4F;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); /* Daha hafif gölge */
+}
+
+.message.success {
+    background-color: #E8F5E9;
+    color: #2E7D32;
+    border: 1px solid #A5D6A7;
+}
+
+.message.error {
+    background-color: #FFEBEE;
+    color: #C62828;
+    border: 1px solid #EF9A9A;
+}
+
+/* Nasıl Çalışır Adımları */
+.steps {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    margin-top: 25px;
+    gap: 20px;
+}
+
+.step-item {
+    flex-basis: 30%; /* Üç öğe yan yana */
+    min-width: 180px; /* Daha dar ekranlarda küçülme */
+    background-color: #ffbfdd;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05); /* Daha hafif gölge */
+    transition: transform 0.3s ease;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.step-item:hover {
+    transform: translateY(-5px);
+}
+
+.step-item i {
+    font-size: 3em;
+    color: #E91E63; /* Canlı pembe ikon rengi */
+    margin-bottom: 10px;
+}
+
+.step-item h3 {
+    font-size: 1.2em;
+    margin-bottom: 5px;
+}
+
+.step-item p {
+    font-size: 0.85em;
+    color: #7B1FA2;
+}
+
+/* URL Listesi */
+.urls-list {
+    margin-top: 20px;
+    text-align: left;
+    max-height: 300px; /* Daha az yer kaplasın */
+    overflow-y: auto;
+    border: 1px solid #F48FB1;
+    padding: 15px;
+    border-radius: 10px;
+    background-color: #FFFBFD;
+    color: #5D001E;
+    box-shadow: inset 0 1px 5px rgba(0,0,0,0.03);
+}
+
+.urls-list p {
+    background-color: #FFEFF5; /* Daha açık pembe */
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    word-wrap: break-word;
+    color: #5D001E;
+    font-size: 0.9em;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.urls-list p:last-child {
+    margin-bottom: 0;
+}
+
+/* Footer Stilleri */
+.footer {
+    width: 100%;
+    text-align: center;
+    padding: 20px;
+    margin-top: auto; /* Footer'ı alta itmek için */
+    background-color: #FFEBF0;
+    color: #880E4F;
+    font-size: 0.85em;
+    border-top: 1px solid #FF527B;
+}
+
+.footer p {
+    margin: 5px 0;
+    color: #880E4F;
+}
+
+/* Duyarlı Tasarım (Mobil ve Tablet) */
+@media (max-width: 1024px) {
+    .content-area {
+        flex-direction: column; /* Sütunlar alt alta */
+        align-items: stretch; /* Dikeyde hizalamayı kapat, yatayda esnet */
+    }
+
+    .left-column, .right-column {
+        min-width: unset; /* Minimum genişliği kaldır */
+        width: 100%; /* Tam genişlik */
+    }
+
+    .main-wrapper {
+        padding: 20px;
+        margin: 15px auto;
+    }
+
+    .header-section {
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+    }
+
+    h1 {
+        font-size: 2.2em;
+    }
+
+    .tagline {
+        font-size: 1.2em;
+    }
+
+    h2 {
+        font-size: 1.5em;
+    }
+
+    .brand-logo {
+        font-size: 2.8em;
+    }
+}
+
+@media (max-width: 768px) {
+    h1 {
+        font-size: 1.8em;
+    }
+    .tagline {
+        font-size: 1em;
+    }
+    h2 {
+        font-size: 1.3em;
+    }
+    .brand-logo {
+        font-size: 2.5em; /* Daha küçük ekranlarda ikon boyutunu biraz daha küçült */
+    }
+}
