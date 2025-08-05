@@ -5,16 +5,11 @@
 const pool = require('../config/db'); // Veritabanı bağlantı havuzumuzu içeri aktarıyoruz
 const { generateShortCode, isValidUrl } = require('../utils/helpers'); // Yardımcı fonksiyonlarımızı içeri aktarıyoruz
 
-// <<<<<<<<< BU DEĞİŞKENLERİ index.js'ten BURAYA TAŞIDIK VE YORUMLARINI GÜNCELLEDİK >>>>>>>>>
 // Bellek içi IP adresi sayaçları
 // Bu obje, her bir IP adresinden yapılan anonim (giriş yapılmamış) kısaltma isteklerinin sayısını tutar.
 // Örnek: {'192.168.1.1': 2, '172.0.0.1': 1}
 // DİKKAT: Bu sayaçlar sunucu her yeniden başlatıldığında sıfırlanır (bellek içi oldukları için).
 // Üretim ortamında, bu tür limitlerin Redis gibi kalıcı bir cache sisteminde veya veritabanında tutulması önerilir.
-const anonymousRequestCounts = {}; 
-// Anonim kullanıcılar için izin verilen maksimum kısaltma isteği sayısı.
-const ANONYMOUS_LIMIT = 3; 
-// <<<<<<<<< TAŞIMA VE GÜNCELLEME SONU >>>>>>>>>
 
 // URL kısaltma işlemini yapacak ana fonksiyon
 // Bu fonksiyon, index.js'teki /shorten endpoint'i tarafından çağrılacak.
@@ -35,28 +30,13 @@ const shortenUrl = async (req, res, body, PORT) => {
     const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     console.log(`Gelen istek IP: ${ipAddress}`);
 
-    // --- ANONİM KISALTMA LİMİT KONTROLÜ ---
-    // Eğer req.user objesi yoksa (yani kullanıcı kimlik doğrulamadan geçmemişse, anonimse):
-    if (!req.user) {
-        // İlgili IP adresi için istek sayısını bir artır. Eğer IP daha önce yoksa 0'dan başlar.
-        anonymousRequestCounts[ipAddress] = (anonymousRequestCounts[ipAddress] || 0) + 1;
-        console.log(` Anonim istek sayısı (${ipAddress}): ${anonymousRequestCounts[ipAddress]}`);
-
-        // Eğer anonim istek sayısı belirlenen limiti aşarsa:
-        if (anonymousRequestCounts[ipAddress] > ANONYMOUS_LIMIT) {
-            // 403 Forbidden (Yasaklandı) yanıtı gönderilir.
-            res.writeHead(403, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: `Anonim kısaltma limitiniz (${ANONYMOUS_LIMIT}) aşıldı. Lütfen giriş yapın veya kayıt olun.` }));
-            return; // Fonksiyonu burada sonlandır.
-        }
-    }
-
+ 
     try {
         // İsteğin body'sinden 'originalUrl' değerini JSON olarak ayrıştırıyoruz.
-        const { originalUrl } = JSON.parse(body);
+        const { longUrl } = JSON.parse(body);
 
         // Gelen 'originalUrl' boşsa veya geçerli bir URL formatında değilse:
-        if (!originalUrl || !isValidUrl(originalUrl)) {
+        if (!longUrl || !isValidUrl(longUrl)) {
             // 400 Bad Request (Hatalı İstek) yanıtı gönderilir.
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Geçersiz URL formatı.' }));
@@ -95,16 +75,16 @@ const shortenUrl = async (req, res, body, PORT) => {
 
             // Yeni URL kaydını veritabanına ekle sorgusu
             const insertQuery = 'INSERT INTO urls(original_url, short_code, user_id, ip_address) VALUES($1, $2, $3, $4) RETURNING short_code';
-            const result = await client.query(insertQuery, [originalUrl, shortCode, userId, ipAddress]);
+            const result = await client.query(insertQuery, [longUrl, shortCode, userId, ipAddress]);
 
             // Başarılı 201 Created (Oluşturuldu) yanıtı gönderilir.
             res.writeHead(201, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
-                originalUrl: originalUrl, // Orijinal uzun URL
+                originalUrl: longUrl, // Orijinal uzun URL
                 shortUrl: `http://localhost:${PORT}/${result.rows[0].short_code}`, // Kısaltılmış URL
                 // Mesajı, kullanıcının giriş durumuna göre özelleştir.
                 message: userId ? "URL başarıyla kısaltıldı." : "URL başarıyla kısaltıldı (anonim).",
-                remainingUses: req.user ? null : (ANONYMOUS_LIMIT - anonymousRequestCounts[ipAddress])
+                
             }));
 
         } catch (dbErr) {
@@ -132,7 +112,6 @@ const shortenUrl = async (req, res, body, PORT) => {
     }
 };
 
-// <<<<<<<<< YENİ EKLENEN KOD BLOĞU BAŞLANGICI (URL YÖNLENDİRME FONKSİYONU) >>>>>>>>>
 // URL yönlendirme işlemini yapacak fonksiyon
 // Bu fonksiyon, index.js'teki GET /:shortCode endpoint'i tarafından çağrılacak.
 // req: Gelen HTTP isteği objesi
@@ -146,16 +125,17 @@ const redirectUrl = async (req, res, shortCode) => {
         const result = await client.query(selectQuery, [shortCode]); // Sorguyu çalıştır
 
         if (result.rows.length > 0) { // Eğer veritabanında bu kısa koda ait bir orijinal URL bulunursa:
-            const originalUrl = result.rows[0].original_url; // Orijinal URL'yi al
+            const longUrl = result.rows[0].original_url; // Orijinal URL'yi al
             // Bu kod bloğu, "tıklama sayısı"nı artırmak için gerekli.
             // Orijinal URL bulundu, şimdi tıklama sayısını artırıyoruz.
-            await client.query(
-                'UPDATE urls SET click_count = click_count + 1 WHERE short_code = $1',
-                [shortCode]
-            );
+           // src/controllers/urlController.js
+       await client.query(
+         'UPDATE urls SET click_count = click_count + 1 WHERE short_code = $1',
+       [shortCode]
+);
             console.log(` Kısa kod '${shortCode}' için tıklama sayısı artırıldı.`);
 
-            res.writeHead(302, { 'Location': originalUrl }); // 302 Found (Bulundu) yanıtı ile tarayıcıyı orijinal URL'ye yönlendir.
+            res.writeHead(302, { 'Location': longUrl }); // 302 Found (Bulundu) yanıtı ile tarayıcıyı orijinal URL'ye yönlendir.
             res.end(); // Yanıtı sonlandır.
         } else {
             // Kısa kod veritabanında bulunamazsa:
@@ -176,14 +156,6 @@ const redirectUrl = async (req, res, shortCode) => {
         }
     }
 };
-// src/controllers/urlController.js
-// ... (mevcut require'lar ve sabitleriniz: pool, generateShortCode, isValidUrl, anonymousRequestCounts, ANONYMOUS_LIMIT)
-
-// shortenUrl fonksiyonunuz burada olmalı
-// ...
-
-// redirectUrl fonksiyonunuz burada olmalı
-// ...
 
 // Kullanıcının kısaltılmış URL'lerini listeleme fonksiyonu
 const listUserUrls = async (req, res, PORT) => {

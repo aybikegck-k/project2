@@ -279,23 +279,6 @@ a:hover {
     outline: none;
 }
 
-/* Anonim Giriş Limiti Bilgilendirme Stili */
-.guest-info {
-    font-size: 0.95em;
-    color: #880E4F; /* Yazı rengi */
-    text-align: center;
-    margin-bottom: 20px; /* Alttan boşluk bırak */
-    padding: 10px; /* İç boşluk */
-    border-radius: 8px; /* Köşeleri yuvarla */
-    background-color: #FFF2F7; /* Hafif bir arka plan */
-    border: 1px dashed #FF527B; /* Kesik çizgi kenarlık */
-}
-
-.guest-info span {
-    font-weight: 700; /* Kalan hakkı kalın yap */
-    color: #E91E63; /* Kalan hakkı daha belirgin pembe yap */
-}
-
 button {
     background-color: #880E4F; /* Genel buton rengi */
     color: white;

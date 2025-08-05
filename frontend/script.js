@@ -10,7 +10,7 @@ const resultBox = document.getElementById('resultBox');            // Kısaltıl
 const shortenedLink = document.getElementById('shortenedLink');    // Kısaltılmış linkin kendisi (<a> etiketi)
 const copyButton = document.getElementById('copyButton');          // Kısaltılmış linki kopyalama butonu
 const messageBox = document.getElementById('messageBox');          // Genel mesajlar (başarı/hata) için kutu
-const remainingUsesSpan = document.getElementById('remainingUsesSpan'); // Anonim kullanım hakkını gösteren span (şimdilik aktif değil)
+
 
 // Kimlik doğrulama formları ve ilgili elementler
 const showLoginBtn = document.getElementById('showLoginBtn');      // "Giriş Yap" formunu göster butonu
@@ -193,7 +193,7 @@ console.log('6. Backend API\'ye istek gönderiliyor...');
                 // Bu, backend'in kullanıcı kimliğini doğrulamasına yardımcı olur.
                 ...(token && { 'Authorization': `Bearer ${token}` })
             },
-            body: JSON.stringify({ longUrl: longUrl }), // Kısaltılacak URL'yi 'longUrl' anahtarıyla JSON olarak gönder
+           body: JSON.stringify({ longUrl: longUrl }), // Kısaltılacak URL'yi 'longUrl' anahtarıyla JSON olarak gönder
         });
         console.log('7. Backend\'den yanıt alındı, durum kodu:', response.status);
 
@@ -204,13 +204,7 @@ console.log('6. Backend API\'ye istek gönderiliyor...');
             shortenedLink.textContent = data.shortUrl; // Kısaltılmış linkin görünen metnini ayarla
             resultBox.style.display = 'block';      // Kısaltılmış linkin gösterileceği kutuyu görünür yap
              console.log('9. Link başarıyla kısaltıldı.');
-            showMessage(messageBox, 'Linkiniz başarıyla kısaltıldı!', 'success'); // Başarı mesajı göster
-
-            // Anonim kullanım hakkı güncellemesi (şimdilik bu kısım backend'de aktif değil, bu yüzden yorum satırında)
-            // Backend'den 'remainingUses' gibi bir bilgi gelirse, bu satırı etkinleştirebilirsiniz.
-            // if (data.remainingUses !== null && data.remainingUses !== undefined) {
-            //     remainingUsesSpan.textContent = data.remainingUses;
-            // }
+            showMessage(messageBox, 'Linkiniz başarıyla kısaltıldı!', 'success'); // Başarı mesajı göste
 
             longUrlInput.value = ''; // Input alanını temizle
 
@@ -280,7 +274,7 @@ listUrlsBtn.addEventListener('click', async () => {
                         <a href="${urlItem.shortUrl}" target="_blank">${urlItem.shortUrl}</a>
                         <span> -> </span>
                         <span class="original-url">${urlItem.longUrl}</span>
-                        <span class="clicks">(${urlItem.clicks || 0} tıklama)</span>
+                        <span class="clicks">(${urlItem.clickCount || 0} tıklama)</span>
                     `;
                     urlsListDiv.appendChild(div); // Listeye ekle
                 });
